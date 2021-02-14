@@ -8,7 +8,7 @@ using System.Collections.ObjectModel;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
-
+using Xamarin.Forms;
 
 namespace MyCoffeeApp.ViewModels
 {
@@ -17,10 +17,11 @@ namespace MyCoffeeApp.ViewModels
         public ObservableRangeCollection<Coffee> Coffee { get; set; }
         public ObservableRangeCollection<Grouping<string, Coffee>> CoffeeGroups { get; }
 
-        public AsyncCommand RefreshCommand { get; } 
+        public AsyncCommand RefreshCommand { get; }
+        public AsyncCommand<Coffee> FavouriteCommand { get; }
+
         public CoffeeEquipmentViewModel()
         {
-
             Title = "Coffee Equipment";
 
             Coffee = new ObservableRangeCollection<Coffee>();
@@ -37,12 +38,20 @@ namespace MyCoffeeApp.ViewModels
             Coffee.Add(new Coffee { Roaster = "Blue Bottle", Name = "Kenya Kiambu Handege", Image = image });
 
             CoffeeGroups.Add(new Grouping<string, Coffee>("Blue Bottle", new[] { Coffee[2] }));
-            CoffeeGroups.Add(new Grouping<string, Coffee>("Yes Plz", Coffee.Take(2)));   
-            
+            CoffeeGroups.Add(new Grouping<string, Coffee>("Yes Plz", Coffee.Take(2)));
+
             RefreshCommand = new AsyncCommand(Refresh);
+            FavouriteCommand = new AsyncCommand<Coffee>(Favorite);
         }
 
-        async Task Refresh()
+        private async Task Favorite(Coffee coffee)
+        {
+            if(coffee==null)
+                return;
+           await Application.Current.MainPage.DisplayAlert("Favourite", coffee.Name, "OK");
+        }
+
+        private async Task Refresh()
         {
             IsBusy = true;
 
@@ -51,6 +60,24 @@ namespace MyCoffeeApp.ViewModels
             IsBusy = false;
         }
 
+        private Coffee _previouslySelected;
+        private Coffee _selectedCoffee;
 
+        public Coffee SelectedCoffee
+        {
+            get => _selectedCoffee;
+            set
+            {
+                if (value != null)
+                {
+                    Application.Current.MainPage.DisplayAlert("Selected", value.Name, "OK");
+                    _previouslySelected = value;
+                    value = null;
+                }
+
+                _selectedCoffee = value;
+                OnPropertyChanged();
+            }
+        }
     }
 }
